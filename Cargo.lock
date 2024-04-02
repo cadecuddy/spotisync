@@ -145,7 +145,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "spotiscribe"
+name = "spotisnatch"
 version = "0.1.0"
 dependencies = [
  "clap",
