@@ -8,6 +8,7 @@ use std::{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
+    pub username: String,
     pub client_id: String,
     pub client_secret: String,
 }
@@ -31,5 +32,10 @@ impl Config {
         let config: Config = serde_json::from_str(&config_file_string)?;
 
         Ok(config)
+    }
+
+    pub fn get_username_from_config() -> Result<String, ConfigError> {
+        let config = Config::load_config()?;
+        Ok(config.username)
     }
 }
