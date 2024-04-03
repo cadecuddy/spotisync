@@ -10,7 +10,7 @@ A (RUST!) CLI program that lets users export their spotify playlist(s) to CSV or
 
 ### Requirements
 
-- [ ] Authenticate with spotify
+- [x] Authenticate with spotify
 - [ ] View public and private playlists (menu of sorts)
 - [ ] Export single playlists
 - [ ] Format
@@ -19,5 +19,5 @@ A (RUST!) CLI program that lets users export their spotify playlist(s) to CSV or
 
 ### Pre-reqs for the dev
 
-- [ ] Quick refresh on spotify auth
-- [ ] Rust CLI program intro
+- [x] Quick refresh on spotify auth
+- [x] Rust CLI program intro
