@@ -16,8 +16,8 @@ pub async fn check_token(spotify: &mut AuthCodeSpotify) -> Result<()> {
             if expired {
                 match spotify.refetch_token().await? {
                     Some(token) => {
-                        println!("Token refreshed");
                         *spotify.get_token().lock().await.unwrap() = Some(token);
+                        spotify.write_token_cache().await?;
                     }
                     None => {
                         println!("Token expired and failed to refresh");
@@ -58,7 +58,9 @@ pub async fn get_client() -> Result<AuthCodeSpotify> {
     let scopes = scopes!(
         "user-library-read",
         "playlist-read-private",
-        "playlist-read-collaborative"
+        "playlist-read-collaborative",
+        "user-read-recently-played",
+        "streaming"
     );
 
     let oauth = OAuth {
