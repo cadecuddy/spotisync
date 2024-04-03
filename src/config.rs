@@ -13,7 +13,7 @@ pub struct Config {
 }
 
 #[cfg(target_family = "unix")]
-fn get_config_directory() -> PathBuf {
+pub fn get_config_directory() -> PathBuf {
     match env::var("XDG_CONFIG_HOME") {
         Ok(var) => Path::new(&var).join("spotisnatch").to_path_buf(),
         Err(_) => Path::new(&env::var("HOME").unwrap()).join(".config/spotisnatch"),

@@ -2,6 +2,12 @@
 
 A (RUST!) CLI program that lets users export their spotify playlist(s) to CSV or TXT files.
 
+## Features
+
+- Download playlists to FLAC or MP3
+- With cover art?
+- Export playlists to CSV, TXT, or JSON
+
 ### Requirements
 
 - [ ] Authenticate with spotify
