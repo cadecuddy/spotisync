@@ -5,7 +5,7 @@ mod config;
 mod downloader;
 mod error;
 
-use futures::stream::TryStreamExt;
+use futures::{pin_mut, stream::TryStreamExt};
 use librespot::{
     core::{config::SessionConfig, session::Session},
     discovery::Credentials,
@@ -43,22 +43,9 @@ async fn main() -> Result<()> {
         .0;
     println!("> Spotify session connected");
 
-    //let playlist_uri = SpotifyId::from_uri("spotify:playlist:37i9dQZF1DWXRqgorJj26U").unwrap();
-
-    //let p = Playlist::get(&session, playlist_uri).await;
-
-    //println!("{:#?}", p);
-
-    let mut playlists = spotify_api
-        .current_user_playlists_manual(Some(30), None)
-        .await
-        .unwrap_or_else(|e| {
-            eprintln!("Failed to get playlists: {}", e);
-            std::process::exit(1);
-        });
-
-    for playlist in playlists.items.iter() {
-        println!("{}", playlist.name);
+    let mut playlists = spotify_api.current_user_playlists();
+    while let Some(playlist) = playlists.try_next().await.unwrap() {
+        println!("> Playlist found: {}", playlist.name);
     }
 
     Ok(())
