@@ -5,16 +5,15 @@ mod config;
 mod downloader;
 mod error;
 
-use futures::{pin_mut, stream::TryStreamExt};
+use futures::stream::TryStreamExt;
 use librespot::{
     core::{config::SessionConfig, session::Session},
     discovery::Credentials,
     protocol::authentication::AuthenticationType,
 };
-use rspotify::{
-    clients::{BaseClient, OAuthClient},
-    model::SimplifiedPlaylist,
-};
+use rspotify::clients::{BaseClient, OAuthClient};
+
+use inquire::MultiSelect;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -41,11 +40,23 @@ async fn main() -> Result<()> {
     let _session = Session::connect(session_config, creds.clone(), None, false)
         .await?
         .0;
+
     println!("> Spotify session connected");
 
     let mut playlists = spotify_api.current_user_playlists();
+    let mut playlist_names = Vec::new();
     while let Some(playlist) = playlists.try_next().await.unwrap() {
-        println!("> Playlist found: {}", playlist.name);
+        playlist_names.push(playlist.name);
+    }
+    playlist_names.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+
+    let ans = MultiSelect::new("Select playlists to save:", playlist_names)
+        .with_page_size(8)
+        .prompt();
+
+    match ans {
+        Ok(answer) => println!("> Playlists selected: {:?}", answer),
+        Err(_) => println!("> No playlists selected"),
     }
 
     Ok(())
