@@ -1,23 +1,27 @@
+use anyhow::Result;
+
 mod api_client;
 mod config;
 mod downloader;
 mod error;
 
-use anyhow::Result;
+use futures::stream::TryStreamExt;
 use librespot::{
-    core::{config::SessionConfig, session::Session, spotify_id::SpotifyId},
+    core::{config::SessionConfig, session::Session},
     discovery::Credentials,
-    metadata::{Metadata, Playlist},
     protocol::authentication::AuthenticationType,
 };
-use rspotify::clients::BaseClient;
+use rspotify::{
+    clients::{BaseClient, OAuthClient},
+    model::SimplifiedPlaylist,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let spotify = api_client::get_client().await?;
+    let spotify_api = api_client::get_client().await?;
     println!("> Spotify API loaded");
 
-    let token = spotify
+    let token = spotify_api
         .get_token()
         .lock()
         .await
@@ -34,16 +38,10 @@ async fn main() -> Result<()> {
 
     let session_config = SessionConfig::default();
 
-    let session = Session::connect(session_config, creds, None, false)
+    let _session = Session::connect(session_config, creds.clone(), None, false)
         .await?
         .0;
     println!("> Spotify session connected");
-
-    let playlist_uri = SpotifyId::from_uri("spotify:playlist:37i9dQZF1DWXRqgorJj26U").unwrap();
-
-    let p = Playlist::get(&session, playlist_uri).await;
-
-    println!("{:#?}", p);
 
     Ok(())
 }
