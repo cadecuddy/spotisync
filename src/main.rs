@@ -79,7 +79,12 @@ async fn main() -> Result<()> {
         .filter(|playlist| ans.contains(&playlist.name))
         .collect();
 
-    let handler = ExportHandler::new(spotify_api, _session, selected_playlists);
+    let handler = ExportHandler::new(
+        spotify_api,
+        _session,
+        selected_playlists,
+        config::get_config_directory(),
+    );
     match intent {
         Ok("Export library metadata") => {
             handler.get_metadata().await;
