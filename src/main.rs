@@ -6,6 +6,7 @@ mod error;
 mod handler;
 
 use futures::stream::TryStreamExt;
+use handler::ExportHandler;
 use librespot::{
     core::{config::SessionConfig, session::Session},
     discovery::Credentials,
@@ -26,7 +27,11 @@ async fn main() -> Result<()> {
     let fetch_playlists = tokio::spawn(async move {
         let mut playlist_stream = api_clone.current_user_playlists();
         let mut playlists = Vec::new();
-        while let Some(playlist) = playlist_stream.try_next().await.unwrap() {
+        while let Some(playlist) = playlist_stream
+            .try_next()
+            .await
+            .expect("Error fetching next playlist")
+        {
             playlists.push(playlist)
         }
         playlists
@@ -36,9 +41,9 @@ async fn main() -> Result<()> {
         .get_token()
         .lock()
         .await
-        .unwrap()
+        .expect("Couldn't get lock")
         .clone()
-        .unwrap()
+        .expect("Failed to clone token")
         .access_token;
 
     let creds = Credentials {
@@ -67,18 +72,19 @@ async fn main() -> Result<()> {
     let ans = MultiSelect::new("Select playlist(s):", playlist_names.clone())
         .with_page_size(8)
         .prompt()
-        .unwrap();
+        .expect("Error parsing selection.");
 
-    let selected_playlists: Vec<&SimplifiedPlaylist> = playlists
-        .iter()
+    let selected_playlists: Vec<SimplifiedPlaylist> = playlists
+        .into_iter()
         .filter(|playlist| ans.contains(&playlist.name))
         .collect();
 
+    let handler = ExportHandler::new(spotify_api, _session, selected_playlists);
     match intent {
-        Ok("Export library metadata") => {}
-        Ok("Export library audio") => {
-            unimplemented!()
+        Ok("Export library metadata") => {
+            handler.get_metadata().await;
         }
+        Ok("Export library audio") => {}
         _ => {
             eprintln!("Error determining intent. Exiting.");
         }
