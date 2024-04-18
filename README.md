@@ -5,7 +5,7 @@ A cli program for exporting spotify playlists / songs to local data formats.
 ### Func Requirements
 
 - [x] Authenticate with spotify
-- [ ] View public and private playlists (menu of sorts)
+- [X] View public and private playlists (menu of sorts)
 - [ ] Export single playlists
 - [ ] Format
 - [ ] Export all playlists
