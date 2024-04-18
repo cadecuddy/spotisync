@@ -2,8 +2,8 @@ use anyhow::Result;
 
 mod api_client;
 mod config;
-mod downloader;
 mod error;
+mod handler;
 
 use futures::stream::TryStreamExt;
 use librespot::{
@@ -11,14 +11,26 @@ use librespot::{
     discovery::Credentials,
     protocol::authentication::AuthenticationType,
 };
-use rspotify::clients::{BaseClient, OAuthClient};
+use rspotify::{
+    clients::{BaseClient, OAuthClient},
+    model::SimplifiedPlaylist,
+};
 
-use inquire::MultiSelect;
+use inquire::{MultiSelect, Select};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let spotify_api = api_client::get_client().await?;
-    println!("> Spotify API loaded");
+    let api_clone = spotify_api.clone();
+
+    let fetch_playlists = tokio::spawn(async move {
+        let mut playlist_stream = api_clone.current_user_playlists();
+        let mut playlists = Vec::new();
+        while let Some(playlist) = playlist_stream.try_next().await.unwrap() {
+            playlists.push(playlist)
+        }
+        playlists
+    });
 
     let token = spotify_api
         .get_token()
@@ -41,22 +53,35 @@ async fn main() -> Result<()> {
         .await?
         .0;
 
-    println!("> Spotify session connected");
+    let menu_options = vec!["Export library metadata", "Export library audio"];
+    let intent = Select::new("What do you want to do?", menu_options).prompt();
 
-    let mut playlists = spotify_api.current_user_playlists();
-    let mut playlist_names = Vec::new();
-    while let Some(playlist) = playlists.try_next().await.unwrap() {
-        playlist_names.push(playlist.name);
-    }
+    let playlists = fetch_playlists.await?;
+    let mut playlist_names: Vec<String> = playlists
+        .clone()
+        .into_iter()
+        .map(|playlist| playlist.name)
+        .collect();
     playlist_names.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 
-    let ans = MultiSelect::new("Select playlists to save:", playlist_names)
+    let ans = MultiSelect::new("Select playlist(s):", playlist_names.clone())
         .with_page_size(8)
-        .prompt();
+        .prompt()
+        .unwrap();
 
-    match ans {
-        Ok(answer) => println!("> Playlists selected: {:?}", answer),
-        Err(_) => println!("> No playlists selected"),
+    let selected_playlists: Vec<&SimplifiedPlaylist> = playlists
+        .iter()
+        .filter(|playlist| ans.contains(&playlist.name))
+        .collect();
+
+    match intent {
+        Ok("Export library metadata") => {}
+        Ok("Export library audio") => {
+            unimplemented!()
+        }
+        _ => {
+            eprintln!("Error determining intent. Exiting.");
+        }
     }
 
     Ok(())
